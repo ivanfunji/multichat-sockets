@@ -12,8 +12,7 @@ class Client:
 		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
 		self.socket.connect(('localhost', 5050))
 
-	def send(self, type, message):
-		message = json.dumps(dict(type=type, data=message))
+	def send(self, message):
 		self.socket.send(message.encode())
 
 	def reception(self):
@@ -30,10 +29,7 @@ class Client:
 	def sending(self):
 		while True:
 			try:
-				message = str(input())
-				message = '%s: %s' % (self.nickname, message)
-				self.send(type='msg:basic', message=message)
-
+				self.send(str(input()))
 			except Exception as e:
 				print('Error sending the message.')
 				print(e)
@@ -41,9 +37,6 @@ class Client:
 				break
 
 	def start(self):
-		self.nickname = str(input('nickname: '))
-		self.send(type='nick:create', message=self.nickname)
-
 		try:
 			reception_thread = threading.Thread(target=self.reception)
 			sending_thread = threading.Thread(target=self.sending)
