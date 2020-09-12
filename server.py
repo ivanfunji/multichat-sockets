@@ -5,18 +5,26 @@ os.system('clear')
 import threading
 import helpers
 import socket
+import storage
 
-class ConnectionsStorage:
+class Client:
 
-	def __init__(self):
-		self.clients = {}
+	def __init__(self, socket, address):
+		self.socket = socket
+		self.address = str(address)
+		self.nickname = None
 
-	def save(self, addr, socket):
-		self.clients.update({addr: socket})
+	def __str__(self):
+		return '[client] %s' % str(self.address)
 
-	def remove(self, addr):
-		self.clients.pop(addr)
+	def save(self):
+		storage.connections.save(self)
 
+	def delete(self):
+		storage.connections.remove(self.address)
+
+	def exists(self):
+		return storage.connections.exists(self)
 
 class Server():
 
@@ -26,24 +34,24 @@ class Server():
 		self.socket.bind(('localhost', 5050))
 		self.socket.listen()
 
-		self.connections = ConnectionsStorage()
-
 	def start(self):
 		try:
 			while True:
-				client, addr = self.socket.accept()
-				print('%s has requested a connection' % str(addr))
+				clientsocket, addr = self.socket.accept()
+				client = Client(socket=clientsocket, address=addr)
+				print('%s has requested a connection' % str(client))
 
-				io = helpers.IOManager(self.connections, client, addr)
+				io = helpers.IOManager(client)
 
 				client_thread = threading.Thread(target=io.handle_client)
 				client_thread.start()
 
 		except (Exception, KeyboardInterrupt) as e:
 			print(str(e))
-			print('server.exit')
 			self.socket.shutdown(socket.SHUT_RDWR)
 			self.socket.close()
+			print('server.exit')
+			exit()
 
 server = Server()
 server.start()

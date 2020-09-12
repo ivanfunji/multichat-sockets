@@ -40,13 +40,11 @@ class Client:
 		try:
 			reception_thread = threading.Thread(target=self.reception)
 			sending_thread = threading.Thread(target=self.sending)
-
 			reception_thread.start()
 			sending_thread.start()
-
 		except KeyboardInterrupt:
-			print('exit')
 			self.socket.close()
+			print('exit')
 
 client = Client()
 client.start()
