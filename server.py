@@ -6,6 +6,7 @@ import threading
 import helpers
 import socket
 import storage
+import sys
 
 class Client:
 
@@ -15,13 +16,17 @@ class Client:
 		self.nickname = None
 
 	def __str__(self):
-		return '[client] %s' % str(self.address)
+		return '[client] %s' % self.address
 
-	def save(self):
+	def save(self, nickname):
+		self.nickname = nickname
+		global storage
 		storage.connections.save(self)
 
 	def delete(self):
-		storage.connections.remove(self.address)
+		global storage
+		storage.connections.remove(self)
+		self.nickname = None
 
 	def exists(self):
 		return storage.connections.exists(self)
@@ -51,7 +56,7 @@ class Server():
 			self.socket.shutdown(socket.SHUT_RDWR)
 			self.socket.close()
 			print('server.exit')
-			exit()
+			sys.exit()
 
 server = Server()
 server.start()

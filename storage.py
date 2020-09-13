@@ -5,12 +5,12 @@ class ConnectionsStorage:
 		self.clients = {}
 
 	def save(self, client):
-		self.clients.update({client.address: client})
+		self.clients.update({client.nickname: client})
 
 	def remove(self, client):
-		self.clients.pop(client.address)
+		self.clients.pop(client.nickname)
 
 	def exists(self, client):
-		return client.address in self.clients
+		return client.nickname in self.clients
 
 connections = ConnectionsStorage()
