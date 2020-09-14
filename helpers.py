@@ -3,10 +3,11 @@ import json
 import collections
 import storage
 import sys
+import commands
 
 class CommandSelector:
 
-	""" Executes the choosed command """
+	"""Determines what command it has to execute"""
 
 	def __init__(self, io_manager):
 		self.io = io_manager
@@ -14,47 +15,21 @@ class CommandSelector:
 	def select(self, statement):
 		try:
 			case = statement[0]
-
-			commands = {
-				'/register': self.register,
-				'/exit': self.exit
+			options = {
+				'/register': commands.CMDRegister(statement[1:]),
+				'/exit': commands.CMDExit()
 			}
-			commands.get(case, self.bad_command)(statement[1:])
-
+			command = options.get(case, commands.CMDBadcmd())
+			command.preset(self.io)
+			command.execute()
 		except Exception as e:
 			print('Failed to excecute command')
-			print(e)
-
-	def bad_command(self, *args, **kargs):
-		self.io.send('use /help to show the commands list')
-
-	def exit(self, *args, **kargs):
-		if self.io.client.exists():
-			self.io.client.delete()
-			self.io.send('\n\nsession.exit')
-		else:
-			self.io.send('No session found')
-			print(storage.connections.clients)
-
-	def register(self, *args, **kargs):
-		data = args[0]
-		if len(data) == 0:
-			self.io.send('No nickname has been choosen\nuse: /register [nickname]')
-
-		else:
-			if data[0] in storage.connections.clients:
-				self.io.send('nickname in use')
-
-			else:
-				self.io.client.save(data[0])
-
-				response = '[%s] joined the chat' % self.io.client.nickname
-				self.io.broadcast(response)
+			print(str(e), 'on line %s\n' % sys.exc_info()[-1].tb_lineno)
 
 
 class MSGHandler:
 
-	""" Determines how the messages will be treated """
+	"""Determines how the messages will be treated"""
 
 	def __init__(self, io_manager, cmd_selector):
 		self.io = io_manager

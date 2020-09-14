@@ -1,3 +1,4 @@
+#!/usr/bin/python3.8
 
 import os
 os.system('clear')
@@ -7,6 +8,8 @@ import threading
 import json
 
 class Client:
+
+	"""Client side application class"""
 
 	def __init__(self):
 		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)

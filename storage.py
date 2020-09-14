@@ -1,6 +1,8 @@
 
 class ConnectionsStorage:
 
+	"""Storage for the active connections"""
+
 	def __init__(self):
 		self.clients = {}
 

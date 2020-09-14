@@ -1,3 +1,4 @@
+#!/usr/bin/python3.8
 
 import os
 os.system('clear')
@@ -8,7 +9,7 @@ import socket
 import storage
 import sys
 
-class Client:
+class ClientConnection:
 
 	def __init__(self, socket, address):
 		self.socket = socket
@@ -20,11 +21,13 @@ class Client:
 
 	def save(self, nickname):
 		self.nickname = nickname
-		global storage
 		storage.connections.save(self)
 
+	def update(self, nickname):
+		self.delete()
+		self.save(nickname)
+
 	def delete(self):
-		global storage
 		storage.connections.remove(self)
 		self.nickname = None
 
@@ -43,7 +46,7 @@ class Server():
 		try:
 			while True:
 				clientsocket, addr = self.socket.accept()
-				client = Client(socket=clientsocket, address=addr)
+				client = ClientConnection(socket=clientsocket, address=addr)
 				print('%s has requested a connection' % str(client))
 
 				io = helpers.IOManager(client)
