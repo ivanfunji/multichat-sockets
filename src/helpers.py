@@ -2,29 +2,49 @@ import socket
 import json
 import collections
 import sys
+import shlex
 from commands import client_commands
+from commands import server_commands
 
-class ClientCMDSelector:
-
-	"""Determines what command it has to execute"""
+class CMDSelector(object):
 
 	def __init__(self, io_controller):
 		self.io = io_controller
 
-	def select(self, statement, storage):
-		try:
+
+class ServerCMDSelector(CMDSelector):
+
+	"""Determines instructions to execute for the server"""
+
+	def __init__(self, io_controller):
+		self.io = io_controller
+
+	def select(self, statement):
+		statement = shlex.split(statement)
+
+		if len(statement) > 0:
 			case = statement[0]
 			options = {
-				'/register': client_commands.Register(data=statement[1:], storage=storage),
-				'/exit': client_commands.Exit()
+				'/broadcast': server_commands.Broadcast(message=statement),
+				'/exit': server_commands.Exit()
 			}
-			command = options.get(case, client_commands.Badcmd())
+			command = options.get(case, server_commands.Badcmd())
 			command.preset(self.io)
 			command.execute()
-		except Exception as e:
-			print('Failed to excecute command')
-			print(str(e), 'on line %s\n' % sys.exc_info()[-1].tb_lineno)
 
+class ClientCMDSelector(CMDSelector):
+
+	"""Determines what command it has to execute for a client"""
+
+	def select(self, statement, storage):
+		case = statement[0]
+		options = {
+			'/register': client_commands.Register(data=statement[1:]),
+			'/exit': client_commands.Exit()
+		}
+		command = options.get(case, client_commands.Badcmd())
+		command.preset(self.io)
+		command.execute()
 
 class MSGHandler:
 
@@ -38,7 +58,7 @@ class MSGHandler:
 		if len(message) > 0 and message[0] == '/':
 			#Specifies that message is a command
 
-			self.cmd.select(message.split(' '), storage=self.io.storage)
+			self.cmd.select(shlex.split(message), storage=self.io.storage)
 		else:
 			if self.io.client.exists():
 				response = '%s: %s' % (self.io.client.nickname, message)

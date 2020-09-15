@@ -17,10 +17,7 @@ class Server():
 		self.socket.bind(('localhost', 5050))
 		self.socket.listen()
 
-	def handle_conn(self, io):
-		cmd_selector = helpers.ClientCMDSelector(io)
-		msg_handler = helpers.MSGHandler(io, cmd_selector)
-
+	def __handle_conn(self, io, msg_handler):
 		try:
 			while True:
 				message = io.receive()
@@ -32,32 +29,39 @@ class Server():
 			io.client.socket.shutdown(socket.SHUT_RDWR)
 			io.client.socket.close()
 
+	def __get_instruction(self):
+		io = helpers.IOController(None, self.connections_storage)
+		cmd_selector = helpers.ServerCMDSelector(io)
+		while True:
+			instruction = str(input('>'))
+			cmd_selector.select(instruction)
+
+	def __listen_connections(self):
+		while True:
+			#A client make a connection
+			clientsocket, addr = self.socket.accept()
+
+			client = storage.ClientConnection(socket=clientsocket, address=addr)
+			client.preset(storage=self.connections_storage)
+
+			io = helpers.IOController(client, self.connections_storage)
+			cmd_selector = helpers.ClientCMDSelector(io)
+			msg_handler = helpers.MSGHandler(io, cmd_selector)
+
+			print('%s has requested a connection' % str(client))
+			client_thread = threading.Thread(
+				target=self.__handle_conn, args=(io, msg_handler))
+			client_thread.start()
+
 	def start(self):
-		try:
-			#Individual server storage
-			connections_storage = storage.ConnectionsStorage()
+		#Individual server storage
+		self.connections_storage = storage.ConnectionsStorage()
 
-			while True:
-				#A client make a connection
-				clientsocket, addr = self.socket.accept()
+		inner_instructions = threading.Thread(target=self.__get_instruction)
+		inner_instructions.start()
 
-
-				client = storage.ClientConnection(socket=clientsocket, address=addr)
-				client.preset(storage=connections_storage)
-
-				print('%s has requested a connection' % str(client))
-
-				io = helpers.IOController(client, connections_storage)
-
-				client_thread = threading.Thread(target=self.handle_conn, args=(io,))
-				client_thread.start()
-
-		except (Exception, KeyboardInterrupt) as e:
-			print(str(e))
-			self.socket.shutdown(socket.SHUT_RDWR)
-			self.socket.close()
-			print('server.exit')
-			sys.exit()
+		listen_connections = threading.Thread(target=self.__listen_connections)
+		listen_connections.start()
 
 server = Server()
 server.start()

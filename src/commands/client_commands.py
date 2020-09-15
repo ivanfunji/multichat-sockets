@@ -1,19 +1,11 @@
+from . import base
 
-class Command:
-
-	"""Command base class"""
-
-	def preset(self, io_controller):
-		"""Specifies the instances used to work with"""
-		self.io = io_controller
-
-class Register(Command):
+class Register(base.Command):
 
 	"""Command used to register a nickname on the client connections storage"""
 
 	def __init__(self, **data):
 		self.data = data['data']
-		self.storage = data['storage']
 
 	def execute(self):
 
@@ -44,7 +36,7 @@ class Register(Command):
 
 		else:
 			nickname = self.data[0]
-			if nickname in self.storage.clients:
+			if nickname in self.io.storage.clients:
 				self.io.send('nickname in use')
 			elif self.io.client.exists():
 				__update(nickname)
@@ -52,12 +44,12 @@ class Register(Command):
 				__create(nickname)
 
 
-class Badcmd(Command):
+class Badcmd(base.Command):
 	def execute(self):
 		self.io.send('use /help to show the commands list')
 
 
-class Exit(Command):
+class Exit(base.Command):
 	"""Client exits from its session"""
 	def execute(self):
 		if self.io.client.exists():
