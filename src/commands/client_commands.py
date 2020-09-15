@@ -1,19 +1,19 @@
-import storage
 
 class Command:
 
 	"""Command base class"""
 
-	def preset(self, io_manager):
-		"""Determines the input/output manager to send or receive messages"""
-		self.io = io_manager
+	def preset(self, io_controller):
+		"""Specifies the instances used to work with"""
+		self.io = io_controller
 
-class CMDRegister(Command):
+class Register(Command):
 
-	"""Command used to register a nickname on the server connections storage"""
+	"""Command used to register a nickname on the client connections storage"""
 
-	def __init__(self, *data):
-		self.data = data
+	def __init__(self, **data):
+		self.data = data['data']
+		self.storage = data['storage']
 
 	def execute(self):
 
@@ -39,27 +39,26 @@ class CMDRegister(Command):
 				self.io.client.update(nickname)
 				self.io.broadcast(response)
 
-
-		data = self.data[0]
-		if len(data) == 0:
+		if len( self.data ) == 0:
 			self.io.send('No nickname has been choosen\nuse: /register [nickname]')
 
 		else:
-			if data[0] in storage.connections.clients:
+			nickname = self.data[0]
+			if nickname in self.storage.clients:
 				self.io.send('nickname in use')
 			elif self.io.client.exists():
-				__update(data[0])
+				__update(nickname)
 			else:
-				__create(data[0])
+				__create(nickname)
 
 
-class CMDBadcmd(Command):
+class Badcmd(Command):
 	def execute(self):
 		self.io.send('use /help to show the commands list')
 
 
-class CMDExit(Command):
-	"""Exits from the session"""
+class Exit(Command):
+	"""Client exits from its session"""
 	def execute(self):
 		if self.io.client.exists():
 			self.io.client.delete()
